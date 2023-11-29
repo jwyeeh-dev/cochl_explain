@@ -18,7 +18,7 @@ def cli():
     parser.add_argument('--delay_time', '-d', type=float, default=0.7, help='delay time')
     parser.add_argument('--front_time', '-f', type=float, default=0.3, help='front time')
     parser.add_argument('--middle_time', '-i', type=float, default=0.2, help='middle time')
-    parser.add_argument('--class_name', '-c', type=str, default='gunshot', help='class name')
+    parser.add_argument('--class_name', '-c', type=str, default='gunshot', help='original class name by sources')
     parser.add_argument('--expected_prob', '-e', type=int, default=90, 
                         help='expected probability (%)')
     
