@@ -82,14 +82,29 @@ class ModelUtils:
         pass
     
     @staticmethod
-    def load_model():
+    def check_model_type(args):
+        """
+        Checks the type of the model.
+
+        Parameters:
+        - model_path (str): Path to the model.
+
+        Returns:
+        - int: Number of models.
+        """
+        if re.search(r'ensemble', args.model_path, re.IGNORECASE):
+            return 'ensemble'
+        else:
+            return 'single'
+
+    @staticmethod
+    def load_model(args):
         """
         Loads and returns Keras models.
 
         Returns:
         - Tuple of Keras models and inner models.
         """
-        args = cli.cli()
         model_pre = keras.models.load_model(args.pre_model, compile=False)
         model_main = keras.models.load_model(args.main_model, compile=False)
 
@@ -112,26 +127,41 @@ class ModelUtils:
         return model_pre, model_main, inner_model_2, inner_reduce_model_0, inner_reduce_model_1, inner_model_0, inner_model_1
 
     @staticmethod
-    def load_class_list(model):
+    def load_class_list(model_path, model, args):
         """
         Loads class list based on the model's class count.
 
         Parameters:
+        - model_path : Path to the model (name)
         - model: The Keras model.
+        - args : Command-line arguments.
 
         Returns:
         - DataFrame: DataFrame containing class information.
         """
-        class_cnt = model.get_layer('activation').get_weights()[0]
+        if args.class_list:
+            tags = pd.read_csv(args.class_list)
 
-        if class_cnt == 752:
-            tags = pd.read_csv('./model_inferences/cochldb.tags.csv')
-        elif class_cnt == 772:
-            tags = pd.read_csv('./model_inferences/cochldb.tags.csv')
-        elif class_cnt == 104:
-            tags = pd.read_csv('./model_inferences/esc50.tags.csv')
-        else: 
-            print("Class amount vacancy.")
+        else:
+            if re.search(r'ensemble', model_path, re.IGNORECASE):
+                tags = pd.read_csv('./model_inferences/cochldb.tags.csv')
+
+            else:
+                all_layers = [layer.name for layer in model.layers]
+                activation_layers = [layer for layer in all_layers if re.search(r'activation', layer, re.IGNORECASE)]
+
+                last_activation_layer_name = activation_layers[-1]
+                last_activation_layer = model.get_layer(last_activation_layer_name)
+
+                class_cnt = last_activation_layer.output_shape[1]
+
+                # According to the number of classes, load the class list
+                if class_cnt == 752: tags = pd.read_csv('./model_inferences/cochldb.tags.orig.csv')
+                elif class_cnt == 772: tags = pd.read_csv('./model_inferences/cochldb.tags.orig.772.csv')
+                else: 
+                    print("No class list found.")
+                    print("Please write your own class list before you start.")    
+
         return tags
 
     @staticmethod

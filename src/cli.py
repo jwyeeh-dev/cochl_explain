@@ -16,6 +16,8 @@ def cli():
     parser.add_argument('--main_model', '-m', type=str, 
                         default='./model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_result_230615-test_model_main.h5',
                         help='model_main path to load')
+    parser.add_argument('--class_list', '-cl', type=str,
+                        help='class_list path to load')
     
     # The arguments for audio source
     parser.add_argument('--audio_source', '-a', type=str, help='audio source path')
@@ -40,5 +42,4 @@ def cli():
 
 if __name__ == '__main__':
     args = cli()
-    # 여기에서 args를 사용하여 다른 작업을 수행할 수 있습니다.
     print(args)
