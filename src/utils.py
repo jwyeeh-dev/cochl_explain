@@ -7,7 +7,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from tf_explain.core.grad_cam import GradCAM as TfExplainGradCAM
 from tf_keras_vis.gradcam import Gradcam as TfKerasVisGradCAM
-from tf_keras_vis.utils import CategoricalScore, ReplaceToLinear
+from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
+from tf_keras_vis.utils.scores import CategoricalScore
 from init import *
 
 class GradCAMUtils:

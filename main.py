@@ -1,13 +1,14 @@
 import os
 import argparse
-from init import *  # import all the packages and modules we need
+from init import * 
 from src.utils import *
+from src.cli import cli
 
 
 
 def main():
     # Step 1: Load the model
-    args = cli.cli()
+    args = cli()
     model_pre, model_main, inner_model_2, inner_reduce_model_0, inner_reduce_model_1, inner_model_0, inner_model_1 = ModelUtils.load_model(args)
 
     # Step 2: Check the model type

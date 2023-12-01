@@ -1,5 +1,6 @@
 # Ignore model inferences
-
+./model_inferences/
+./class_list/
 
 # Ignore python cache
 .pycache/
@@ -7,9 +8,6 @@ __pycache__/
 *.DS_Store
 
 # Ignore data files
-*.h5
-model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_model_pre.h5
-model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_result_230615-test_model_main.h5
 *.wav
 *.mp3
 *.mp4
@@ -26,3 +24,6 @@ model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.2303
 *.ckpt.*
 *.meta
 *.index
+*.h5
+model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_model_pre.h5
+model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_result_230615-test_model_main.h5
