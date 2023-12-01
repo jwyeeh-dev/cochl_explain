@@ -1,5 +1,5 @@
 from init import *  # import all the packages and modules we need
-from utils import *
+from src.utils import *
 
 
 def main():
