@@ -392,7 +392,7 @@ class AudioUtils:
         """
         Compute mel spectrogram using librosa.
 
-        Parameters:
+        Parameters: 
         - audio_source (str): Path to the audio source file.
 
         Returns:
