@@ -21,10 +21,15 @@ def cli():
     
     # The arguments for audio source
     parser.add_argument('--audio_source', '-a', type=str, help='audio source path')
+    parser.add_argument('--class_name', '-c', type=str, default='Gunshot', help='original class name by sources')
+
+    """
+    The arguments for Modifying the audio source
+    """
+    # The arguments for audio preprocessing
     parser.add_argument('--delay_time', '-dt', type=float, default=0.7, help='delay time')
     parser.add_argument('--front_time', '-ft', type=float, default=0.3, help='front time')
     parser.add_argument('--middle_time', '-mt', type=float, default=0.2, help='middle time')
-    parser.add_argument('--class_name', '-c', type=str, default='Gunshot', help='original class name by sources')
     parser.add_argument('--expected_prob', '-ep', type=int, default=90, 
                         help='expected probability (%)')
     
