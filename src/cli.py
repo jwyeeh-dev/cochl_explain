@@ -11,10 +11,10 @@ def cli():
 
     # The arguments for model
     parser.add_argument('--pre_model', '-p', type=str,
-                        default='./model_inference/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_model_pre.h5', 
+                        default='./assets/model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_model_pre.h5', 
                         help='model_pre path to load')
     parser.add_argument('--main_model', '-m', type=str, 
-                        default='./model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_result_230615-test_model_main.h5',
+                        default='./assets/model_inferences/cochldb.2.15.230316_v8_22050_Ensemble_Distill_cochldb.2.15.230316_v8_Ensemble_Distill_22050_result_230615-test_model_main.h5',
                         help='model_main path to load')
     parser.add_argument('--class_list', '-cl', type=str,
                         help='class_list path to load')

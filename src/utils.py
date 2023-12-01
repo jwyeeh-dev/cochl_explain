@@ -11,103 +11,6 @@ from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
 from tf_keras_vis.utils.scores import CategoricalScore
 from init import *
 
-class GradCAMUtils:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def _preprocess_input(input):
-        """
-        Preprocesses the input image before generating GradCAM.
-
-        Parameters:
-        - input (str): Path to the input source.
-
-        Returns:
-        - img (numpy.ndarray): Preprocessed image.
-        """
-        data = np.expand_dims(input, axis=0)
-        data = (data, None)
-        return data
-
-    @classmethod
-    def generate_grad_cam_tf_explain(cls, model, model_pre_output, class_num, layer_name):
-        """
-        Generates GradCAM using TfExplain.
-
-        Parameters:
-        - model: The Keras model.
-        - model_pre_output (str): Output from the pre-processing model.
-        - class_index (int): Index of the target class.
-        - layer_name (str): Name of the target layer.
-
-        Returns:
-        - None (Displays the generated GradCAM).
-        """
-        explainer = TfExplainGradCAM()
-
-        data = []
-        grids1 = []
-        grids2 = []
-
-
-        for i in range(model_pre_output.shape[0]):
-            data = cls._preprocess_input(model_pre_output[i])
-            if model.shape == 1:
-                cam1 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name)
-                cam2 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name)
-            elif model.shape > 1:
-                cam1 = explainer.explain(data, model[0], class_index=class_num, layer_name=layer_name)
-                cam2 = explainer.explain(data, model[1], class_index=class_num, layer_name=layer_name)
-            
-            grids1.append(cam1)
-            grids2.append(cam2)
-
-        return grids1, grids2
-
-    @staticmethod
-    def generate_grad_cam_tf_keras_vis(cls, model_pre_output, model, class_index):
-        """
-        Applies GradCAM and generates visualization.
-
-        Parameters:
-        - model_pre_output: Output from the pre-processing model.
-        - model: The Keras model.
-        - class_num (int): Index of the target class.
-
-        Returns:
-        - Tuple: GradCAM results for different branches.
-        """
-        grids1 = []
-        grids2 = []
-
-        # Apply GradCAM
-        for i in range(model_pre_output.shape[0]):
-            model_data = cls._preprocess_input(model_pre_output[i])
-
-            # Create GradCAM
-            if model.shape == 1:
-                gradcam1 = TfExplainGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
-                gradcam2 = TfExplainGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
-            elif model.shape > 1:
-                gradcam1 = TfExplainGradCAM(model[0], model_modifier=ReplaceToLinear(), clone=True)
-                gradcam2 = TfExplainGradCAM(model[1], model_modifier=ReplaceToLinear(), clone=True)
-
-            # Generate heatmap with GradCAM++
-            data = (model_data, None)
-            cam1 = gradcam1(CategoricalScore(class_index), model_data)
-            cam2 = gradcam2(CategoricalScore(class_index), model_data)
-
-            cam1 = cam1.reshape(128,96,1)
-            cam2 = cam2.reshape(128,96,1)
-
-            # Append to results
-            grids1.append(cam1)
-            grids2.append(cam2)
-
-        return grids1, grids2
-
-
 class ModelUtils:
     def __init__(self):
         pass
@@ -123,7 +26,7 @@ class ModelUtils:
         Returns:
         - int: Number of models.
         """
-        if re.search(r'ensemble', args.model_path, re.IGNORECASE):
+        if re.search(r'ensemble', args.main_model, re.IGNORECASE):
             return 'ensemble'
         else:
             return 'single'
@@ -175,7 +78,7 @@ class ModelUtils:
 
         else:
             if re.search(r'ensemble', model_path, re.IGNORECASE):
-                tags = pd.read_csv('./model_inferences/cochldb.tags.csv')
+                tags = pd.read_csv('./assets/class_list/cochldb.tags.csv')
 
             else:
                 all_layers = [layer.name for layer in model.layers]
@@ -187,8 +90,8 @@ class ModelUtils:
                 class_cnt = last_activation_layer.output_shape[1]
 
                 # According to the number of classes, load the class list
-                if class_cnt == 752: tags = pd.read_csv('./model_inferences/cochldb.tags.orig.csv')
-                elif class_cnt == 772: tags = pd.read_csv('./model_inferences/cochldb.tags.orig.772.csv')
+                if class_cnt == 752: tags = pd.read_csv('./assets/class_list/cochldb.tags.orig.csv')
+                elif class_cnt == 772: tags = pd.read_csv('./assets/class_list/cochldb.tags.orig.772.csv')
                 else: 
                     print("No class list found.")
                     print("Please write your own class list before you start.")    
@@ -224,59 +127,67 @@ class ModelUtils:
         Returns:
         - Tuple: Predicted labels, target tag probability, highest probability, predicted class number, predicted class name.
         """
-        args = cli.cli()
+
+        args = cli()
 
         # Model input
-        most_predicted = []
-        target_predicted = []
-        model_outputs = []
+        target_tag_prob = []
+        highest_prob = []
+        highest_class_num = []
+        highest_class_name = []
+
         class_num = ModelUtils.find_class_num(args.class_name, tags) 
 
         # 0th: model_pre
         model_pre_output = model_pre.predict(frames_reshaped)
 
         # 1st: model_main
+        predicted_labels = model_main.predict(model_pre_output)
+
         # Target tag probability (want to be predicted)
         for i in range(len(model_pre_output)):
-            predicted_labels = model_main.predict(model_pre_output[i])
-            target_tag_prob = predicted_labels[i][class_num]
+            target_tag_prob.append(predicted_labels[i,class_num])
 
-        # Highest probability tag (result)
-            highest_prob = predicted_labels.max()
-            pred_class_num = predicted_labels.argmax()
-            pred_class_name = tags['tags'][pred_class_num] 
+            # Highest probability tag (result)
+            highest_prob.append(predicted_labels[i].max())
+            highest_class_num.append(predicted_labels[i].argmax())
+            highest_class_name.append(tags['tags'][highest_class_num[i]])
 
         # ------------------ TARGET RESULT ------------------
-        print("="*20 + "RESULT" + "="*20)
+        print("\n")
+        print("="*25 + "TARGET RESULT" + "="*25)
         print(f"Probability         | {target_tag_prob}")
         print(f"Target_class_number | {class_num}")
         print(f"Target_class        | {args.class_name}")
-        print("="* 46)
+        print("="* 60)
 
         # ------------------ PREDICTED RESULT ------------------
-        print("="*20 + "RESULT" + "="*20)
+        print("\n")
+        print("="*20 + "MOST PREDICTED RESULT" + "="*20)
         print(f"Probability            | {highest_prob}")
-        print(f"Predicted_class_number | {pred_class_num}")
-        print(f"Predicted_class        | {tags['tags'][pred_class_num]}")
-        print("="* 46)
+        print(f"Predicted_class_number | {highest_class_num}")
+        print(f"Predicted_class        | {tags['tags'][highest_class_num].values}")
+        print("="* 60)
 
-        return predicted_labels, target_tag_prob, highest_prob, pred_class_num, pred_class_name
+        return predicted_labels, target_tag_prob, highest_prob, highest_class_num, highest_class_name
+
 
 class VisualizationUtils:
     def __init__(self):
         pass
 
-
-
     @staticmethod
     def tensorboard_vis():
+        
         """
         Launches TensorBoard for visualization.
         """
+
         os.system('tensorboard --logdir ./logs/fit --host localhost --port 8088')
 
     @staticmethod
     def plot_grad_cam(model_pre_output, grids1, grids2, predicted_labels):
+        
         """
         Plots GradCAM visualizations.
 
@@ -285,30 +196,34 @@ class VisualizationUtils:
         - grids: GradCAM results for the first model.
         - grids1: GradCAM results for the second model.
         """
-        fig, axs = plt.subplots(2, 5, figsize=(50, 35), facecolor='w', edgecolor='k')
+        mid = model_pre_output.shape[0] // 2
+        fig, axs = plt.subplots(2, mid, figsize=(50, 35), facecolor='w', edgecolor='k')
         plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.25, hspace=0.25)
-
+        print(model_pre_output.shape[0])
         for i in range(model_pre_output.shape[0]):
-            if i < 5:  
+            
+            if i < mid:  
                 axs[0][i].imshow(model_pre_output[i], aspect='auto', origin='lower')
-                axs[0].imshow(grids1[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')  
-                axs[0].imshow(grids2[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')
+                axs[0][i].imshow(grids1[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')  
+                axs[0][i].imshow(grids2[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')
                 axs[0][i].set_title(f'Probability : {predicted_labels.max(axis=1)[i]:.4f}', fontsize=35)
                 axs[0][i].set_ylabel('Mel Frequency', fontsize=35)
                 axs[0][i].set_xlabel(f'Time Frame : {i+1}sec', fontsize=35)
 
-            elif i >= 5:
-                axs[1][i-5].imshow(model_pre_output[i], aspect='auto', origin='lower')
-                axs[1].imshow(grids1[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')  
-                axs[1].imshow(grids2[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')
-                axs[1][i-5].set_title(f'Probability : {predicted_labels.max(axis=1)[i]:.4f}', fontsize=35)
-                axs[1][i-5].set_ylabel('Mel Frequency', fontsize=35)
-                axs[1][i-5].set_xlabel(f'Time Frame: {i+1}sec', fontsize=35)
-
-        plt.show()
+            elif i >= mid:
+                axs[1][i-mid].imshow(model_pre_output[i], aspect='auto', origin='lower')
+                axs[1][i-mid].imshow(grids1[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')  
+                axs[1][i-mid].imshow(grids2[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')
+                axs[1][i-mid].set_title(f'Probability : {predicted_labels.max(axis=1)[i]:.4f}', fontsize=35)
+                axs[1][i-mid].set_ylabel('Mel Frequency', fontsize=35)
+                axs[1][i-mid].set_xlabel(f'Time Frame: {i+1}sec', fontsize=35)
+        
+        fig.savefig('./assets/_output/gradcam.png', axs)
+        plt.close()
 
     @staticmethod
     def plot_activation_histograms(grids, predicted_labels, mode=0):
+        
         """
         Plots activation histograms.
 
@@ -321,12 +236,13 @@ class VisualizationUtils:
         - 0: Vertical bar plot.
         - 1: Horizontal bar plot.
         """
+
         fig, axs = plt.subplots(2, 5, figsize=(50, 35), facecolor='w', edgecolor='k')
         plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.25, hspace=0.25)
 
         for i in range(len(grids)):
             # Calculate mean activations of the red channel
-            mean_activations_red = grids[i][:, :, 0].mean(axis=mode)
+            mean_activations_red = grids[i,:, :, 0].mean(axis=mode)
 
             if mode == 0:
                 axs[i // 5, i % 5].bar(range(len(mean_activations_red)), mean_activations_red, alpha=0.5, color='red')
@@ -343,7 +259,8 @@ class VisualizationUtils:
             # Set axis and title
             axs[i // 5, i % 5].set_title(f'Probability : {predicted_labels.max(axis=1)[i]:.4f}', fontsize=35)
 
-        plt.show()
+        plt.savefig('./assets/_output/activation_hist.png', axs)
+        plt.close()
 
     @staticmethod
     def plot_activation_histograms_grad(grids, predicted_labels, mode=0):
@@ -364,7 +281,7 @@ class VisualizationUtils:
 
         for i in range(len(grids)):
             # Red 채널의 평균 activation 값을 계산합니다.
-            mean_activations_red = grids[i][:, :].mean(axis=mode)
+            mean_activations_red = grids[i,:, :].mean(axis=mode)
 
             if mode == 0:
                 axs[i // 5, i % 5].bar(range(len(mean_activations_red)), mean_activations_red, alpha=0.5, color='red')
@@ -381,8 +298,8 @@ class VisualizationUtils:
 
             axs[i // 5, i % 5].set_title(f'Probability : {predicted_labels.max(axis=1)[i]:.4f}', fontsize=35)
 
-        plt.show()
-
+        plt.savefig('./assets/_output/activation_hist_grad.png', axs)
+        plt.close()
 
 class AudioUtils:
     def __init__(self):
@@ -401,10 +318,9 @@ class AudioUtils:
         - sr (int): Sample rate of `y`.
         - frames_reshaped (numpy.ndarray): Reshaped mel spectrogram frames.
         """
-        y, sr = librosa.load(args.audio_source, sr=22050)
-        mel_spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048, hop_length=512, n_mels=128)
-        mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
-        frames_reshaped = mel_spectrogram.reshape(1, 128, 87, 1)
+
+        y, sr = librosa.load(args.audio_source, sr=22050)  # 로드 시 샘플링 레이트를 22050으로 설정
+        frames = librosa.util.frame(y, frame_length=22050, hop_length=22050).T # 1초 단위로 나눔
+        frames_reshaped = frames.reshape(frames.shape[0], 1, 22050) # 모델 입력을 위해 적절한 형태로 변환
 
         return y, sr, frames_reshaped
-    
