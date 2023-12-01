@@ -15,67 +15,97 @@ class GradCAMUtils:
         pass
 
     @staticmethod
-    def _preprocess_input(image_path):
+    def _preprocess_input(input):
         """
         Preprocesses the input image before generating GradCAM.
 
         Parameters:
-        - image_path (str): Path to the input image.
+        - input (str): Path to the input source.
 
         Returns:
         - img (numpy.ndarray): Preprocessed image.
         """
-        img = cv2.imread(image_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (224, 224))  # Resize to match model input size
-        img = np.expand_dims(img, axis=0)
-        img = img / 255.0  # Normalize
-        return img
+        data = np.expand_dims(input, axis=0)
+        data = (data, None)
+        return data
 
     @classmethod
-    def generate_grad_cam_tf_explain(cls, model, image_path, class_index, layer_name):
+    def generate_grad_cam_tf_explain(cls, model, model_pre_output, class_num, layer_name):
         """
         Generates GradCAM using TfExplain.
 
         Parameters:
         - model: The Keras model.
-        - image_path (str): Path to the input image.
+        - model_pre_output (str): Output from the pre-processing model.
         - class_index (int): Index of the target class.
         - layer_name (str): Name of the target layer.
 
         Returns:
         - None (Displays the generated GradCAM).
         """
-        img = cls._preprocess_input(image_path)
         explainer = TfExplainGradCAM()
-        grid = explainer.explain(
-            validation_data=(img, None),
-            model=model,
-            layer_name=layer_name,
-            class_index=class_index,
-        )
-        plt.imshow(grid)
-        plt.show()
 
-    @classmethod
-    def generate_grad_cam_tf_keras_vis(cls, model, image_path, class_index, layer_name):
+        data = []
+        grids1 = []
+        grids2 = []
+
+
+        for i in range(model_pre_output.shape[0]):
+            data = cls._preprocess_input(model_pre_output[i])
+            if model.shape == 1:
+                cam1 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name)
+                cam2 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name)
+            elif model.shape > 1:
+                cam1 = explainer.explain(data, model[0], class_index=class_num, layer_name=layer_name)
+                cam2 = explainer.explain(data, model[1], class_index=class_num, layer_name=layer_name)
+            
+            grids1.append(cam1)
+            grids2.append(cam2)
+
+        return grids1, grids2
+
+    @staticmethod
+    def generate_grad_cam_tf_keras_vis(cls, model_pre_output, model, class_index):
         """
-        Generates GradCAM using Tf-Keras-Vis.
+        Applies GradCAM and generates visualization.
 
         Parameters:
+        - model_pre_output: Output from the pre-processing model.
         - model: The Keras model.
-        - image_path (str): Path to the input image.
-        - class_index (int): Index of the target class.
-        - layer_name (str): Name of the target layer.
+        - class_num (int): Index of the target class.
 
         Returns:
-        - None (Displays the generated GradCAM).
+        - Tuple: GradCAM results for different branches.
         """
-        img = cls._preprocess_input(image_path)
-        explainer = TfKerasVisGradCAM(model, layer_name)
-        grid = explainer(img, class_index)
-        plt.imshow(grid)
-        plt.show()
+        grids1 = []
+        grids2 = []
+
+        # Apply GradCAM
+        for i in range(model_pre_output.shape[0]):
+            model_data = cls._preprocess_input(model_pre_output[i])
+
+            # Create GradCAM
+            if model.shape == 1:
+                gradcam1 = TfExplainGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
+                gradcam2 = TfExplainGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
+            elif model.shape > 1:
+                gradcam1 = TfExplainGradCAM(model[0], model_modifier=ReplaceToLinear(), clone=True)
+                gradcam2 = TfExplainGradCAM(model[1], model_modifier=ReplaceToLinear(), clone=True)
+
+            # Generate heatmap with GradCAM++
+            data = (model_data, None)
+            cam1 = gradcam1(CategoricalScore(class_index), model_data)
+            cam2 = gradcam2(CategoricalScore(class_index), model_data)
+
+            cam1 = cam1.reshape(128,96,1)
+            cam2 = cam2.reshape(128,96,1)
+
+            # Append to results
+            grids1.append(cam1)
+            grids2.append(cam2)
+
+        return grids1, grids2
+
 
 class ModelUtils:
     def __init__(self):
@@ -235,44 +265,7 @@ class VisualizationUtils:
     def __init__(self):
         pass
 
-    @staticmethod
-    def gradcam_result(model_pre_output, model, class_num=53):
-        """
-        Applies GradCAM and generates visualization.
 
-        Parameters:
-        - model_pre_output: Output from the pre-processing model.
-        - model: The Keras model.
-        - class_num (int): Index of the target class.
-
-        Returns:
-        - Tuple: GradCAM results for different models.
-        """
-        grids = []
-        grids1 = []
-
-        # Apply GradCAM
-        for i in range(model_pre_output.shape[0]):
-            model_data = np.expand_dims(model_pre_output[i], axis=0)
-
-            # Create GradCAM
-            if model.shape == 1:
-                gradcamplpl = Gradcam(model, model_modifier=ReplaceToLinear(), clone=True)
-                gradcamplpl1 = Gradcam(model, model_modifier=ReplaceToLinear(), clone=True)
-            elif model.shape > 1:
-                gradcamplpl = Gradcam(model[0], model_modifier=ReplaceToLinear(), clone=True)
-                gradcamplpl1 = Gradcam(model[1], model_modifier=ReplaceToLinear(), clone=True)
-
-            # Generate heatmap with GradCAM++
-            data = (model_data, None)
-            cam = gradcamplpl(CategoricalScore(class_num), model_data)
-            cam1 = gradcamplpl1(CategoricalScore(class_num), model_data)
-
-            # Append to results
-            grids.append(cam)
-            grids1.append(cam1)
-
-        return grids, grids1
 
     @staticmethod
     def tensorboard_vis():
@@ -282,7 +275,7 @@ class VisualizationUtils:
         os.system('tensorboard --logdir ./logs/fit --host localhost --port 8088')
 
     @staticmethod
-    def plot_grad_cam(model_pre_output, grids, grids1):
+    def plot_grad_cam(model_pre_output, grids1, grids2, predicted_labels):
         """
         Plots GradCAM visualizations.
 
@@ -297,12 +290,16 @@ class VisualizationUtils:
         for i in range(model_pre_output.shape[0]):
             if i < 5:  
                 axs[0][i].imshow(model_pre_output[i], aspect='auto', origin='lower')
+                axs[0].imshow(grids1[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')  
+                axs[0].imshow(grids2[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')
                 axs[0][i].set_title(f'Probability : {predicted_labels.max(axis=1)[i]:.4f}', fontsize=35)
                 axs[0][i].set_ylabel('Mel Frequency', fontsize=35)
                 axs[0][i].set_xlabel(f'Time Frame : {i+1}sec', fontsize=35)
 
             elif i >= 5:
                 axs[1][i-5].imshow(model_pre_output[i], aspect='auto', origin='lower')
+                axs[1].imshow(grids1[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')  
+                axs[1].imshow(grids2[i], alpha=0.3, aspect='auto', origin='lower', cmap='jet')
                 axs[1][i-5].set_title(f'Probability : {predicted_labels.max(axis=1)[i]:.4f}', fontsize=35)
                 axs[1][i-5].set_ylabel('Mel Frequency', fontsize=35)
                 axs[1][i-5].set_xlabel(f'Time Frame: {i+1}sec', fontsize=35)
@@ -332,7 +329,6 @@ class VisualizationUtils:
 
             if mode == 0:
                 axs[i // 5, i % 5].bar(range(len(mean_activations_red)), mean_activations_red, alpha=0.5, color='red')
-                axs[i // 5, i % 5].set_ylabel('Average Activation', fontsize=20)
                 axs[i // 5, i % 5].set_yticks(range(len(mean_activations_red)))
                 axs[i // 5, i % 5].set_yticklabels(range(1, len(mean_activations_red) + 1))
                 axs[i // 5, i % 5].set_xlabel('Time Frame', fontsize=35)
@@ -392,7 +388,7 @@ class AudioUtils:
         pass
 
     @staticmethod
-    def mel_spec_with_librosa(audio_source):
+    def mel_spec_with_librosa(args):
         """
         Compute mel spectrogram using librosa.
 
@@ -404,9 +400,6 @@ class AudioUtils:
         - sr (int): Sample rate of `y`.
         - frames_reshaped (numpy.ndarray): Reshaped mel spectrogram frames.
         """
-
-        args = cli.cli()
-
         y, sr = librosa.load(args.audio_source, sr=22050)
         mel_spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048, hop_length=512, n_mels=128)
         mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
