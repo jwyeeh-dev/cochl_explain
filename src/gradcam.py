@@ -28,7 +28,7 @@ class GradCAMUtils:
         - img (numpy.ndarray): Preprocessed image.
         """
         data = np.expand_dims(input, axis=0)
-        data = (data, None)
+        
         return data
 
     @classmethod
@@ -49,12 +49,13 @@ class GradCAMUtils:
         grids1 = []
         grids2 = []
 
-
+    
         # Apply GradCAM
         explainer = TfExplainGradCAM()
 
         for i in range(model_pre_output.shape[0]):
             data = cls._preprocess_input(model_pre_output[i])
+            data = (data, None)
             print(data[0].shape)
 
             if ModelUtils.check_model_type(args) == 'single':
@@ -75,7 +76,7 @@ class GradCAMUtils:
         return grids1, grids2
 
     @staticmethod
-    def generate_grad_cam_tf_keras_vis(cls, model_pre_output, model, class_index, args):
+    def generate_grad_cam_tf_keras_vis(model, model_pre_output, class_index, layer_name, args):
         """
         Applies GradCAM and generates visualization.
 
@@ -92,12 +93,12 @@ class GradCAMUtils:
 
         # Apply GradCAM
         for i in range(model_pre_output.shape[0]):
-            model_data = cls._preprocess_input(model_pre_output[i])
+            model_data = GradCAMUtils._preprocess_input(model_pre_output[i])
 
             # Create GradCAM
             if ModelUtils.check_model_type(args) == 'single':
-                gradcam1 = TfExplainGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
-                gradcam2 = TfExplainGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
+                gradcam1 = TfKerasVisGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
+                gradcam2 = TfKerasVisGradCAM(model, model_modifier=ReplaceToLinear(), clone=True)
                 
                 # Generate heatmap with GradCAM++
                 cam1 = gradcam1(CategoricalScore(class_index), model_data)
@@ -111,8 +112,8 @@ class GradCAMUtils:
                 grids2.append(cam2)
 
             elif ModelUtils.check_model_type(args) == 'ensemble':
-                gradcam1 = TfExplainGradCAM(model[0], model_modifier=ReplaceToLinear(), clone=True)
-                gradcam2 = TfExplainGradCAM(model[1], model_modifier=ReplaceToLinear(), clone=True)
+                gradcam1 = TfKerasVisGradCAM(model[0], model_modifier=ReplaceToLinear(), clone=True)
+                gradcam2 = TfKerasVisGradCAM(model[1], model_modifier=ReplaceToLinear(), clone=True)
                 
                 # Generate heatmap with GradCAM++
                 cam1 = gradcam1(CategoricalScore(class_index), model_data)

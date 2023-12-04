@@ -198,7 +198,8 @@ class VisualizationUtils:
         plt.title(f'Probability : {target_tag_prob[seconds]:.4f}', fontsize=30)
         plt.ylabel('Mel Frequency', fontsize=30)
         plt.xlabel(f'Time Frame : 1sec', fontsize=30)
-        
+        plt.savefig('./assets/_output/gradcam.png')
+        plt.close()
 
     def subplot_grad_cam(model_pre_output, grids1, grids2, predicted_labels):
         
