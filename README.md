@@ -21,13 +21,6 @@ This file is the tool which is working on
 - any input length
   - they can split about 1sec
   - mp3, wav, etc.
- 
-
-### Input Audio Naming Rules
-
-```
-[class_name]_prob_[Probability]_front_time
-```
 
 
 ### Working Command
@@ -84,3 +77,13 @@ def cli():
     
     return parser.parse_args()
 ```
+
+
+### Supported visualization methods 
+
+- GradCAM (tf-keras-vis, tf-explain)
+- Single Plot
+- Subplot according to time range
+- Distribution of concentrated gradient
+- (to be contd.)
+
