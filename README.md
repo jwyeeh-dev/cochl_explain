@@ -85,5 +85,5 @@ def cli():
 - Single Plot
 - Subplot according to time range
 - Distribution of concentrated gradient
-- (to be contd.)
+- (contd.)
 
