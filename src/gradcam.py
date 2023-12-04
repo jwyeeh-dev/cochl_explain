@@ -28,10 +28,11 @@ class GradCAMUtils:
         - img (numpy.ndarray): Preprocessed image.
         """
         data = np.expand_dims(input, axis=0)
+        data = (data, None)
         return data
 
     @classmethod
-    def generate_grad_cam_tf_explain(cls, model, model_pre_output, class_num, layer_name, args):
+    def generate_grad_cam_tf_explain(cls, model, model_1, model_pre_output, class_num, layer_name, args):
         """
         Generates GradCAM using TfExplain.
 
@@ -49,22 +50,27 @@ class GradCAMUtils:
         grids2 = []
 
 
+        # Apply GradCAM
         explainer = TfExplainGradCAM()
 
         for i in range(model_pre_output.shape[0]):
             data = cls._preprocess_input(model_pre_output[i])
+            print(data[0].shape)
 
             if ModelUtils.check_model_type(args) == 'single':
                 cam1 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name)
                 cam2 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name)
+
                 grids1.append(cam1)
                 grids2.append(cam2)
 
-            elif ModelUtils.check_model_type(args) == 'ensenble':
-                cam1 = explainer.explain(data, model[0], class_index=class_num, layer_name=layer_name[0])
-                cam2 = explainer.explain(data, model[1], class_index=class_num, layer_name=layer_name[1])
+            elif ModelUtils.check_model_type(args) == 'ensemble':
+                cam1 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name[0])
+                cam2 = explainer.explain(data, model_1, class_index=class_num, layer_name=layer_name[1])
                 grids1.append(cam1)
                 grids2.append(cam2)
+            else:
+                ("Error: Model Type is not defined")
 
         return grids1, grids2
 

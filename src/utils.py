@@ -42,21 +42,24 @@ class ModelUtils:
         model_pre = keras.models.load_model(args.pre_model, compile=False)
         model_main = keras.models.load_model(args.main_model, compile=False)
 
-        pattern = re.compile(r'\bensemble\b')
-        match = re.search(pattern, args.main_model)
 
-        if match:
+        if ModelUtils.check_model_type(args) == 'ensemble': 
             inner_model_2 = model_main.get_layer('model_2')
             inner_reduce_model_0 = model_main.get_layer('model_2').get_layer('reduced_model_0')
             inner_reduce_model_1 = model_main.get_layer('model_2').get_layer('reduced_model_1')
             inner_model_0 = model_main.get_layer('model_2').get_layer('reduced_model_0').get_layer('model')
             inner_model_1 = model_main.get_layer('model_2').get_layer('reduced_model_1').get_layer('model_1')
-        else:
+        
+        elif ModelUtils.check_model_type(args) == 'single':
             inner_model_2 = None
             inner_reduce_model_0 = None
             inner_reduce_model_1 = None
             inner_model_0 = None
             inner_model_1 = None
+        
+        else: 
+            print("No model found.")
+            print("Please write your own model before you start.")
 
         return model_pre, model_main, inner_model_2, inner_reduce_model_0, inner_reduce_model_1, inner_model_0, inner_model_1
 
@@ -169,7 +172,7 @@ class ModelUtils:
         print(f"Predicted_class        | {tags['tags'][highest_class_num].values}")
         print("="* 60)
 
-        return predicted_labels, target_tag_prob, highest_prob, highest_class_num, highest_class_name
+        return model_pre_output, predicted_labels, target_tag_prob, highest_prob, highest_class_num, highest_class_name
 
 
 class VisualizationUtils:
@@ -186,7 +189,18 @@ class VisualizationUtils:
         os.system('tensorboard --logdir ./logs/fit --host localhost --port 8088')
 
     @staticmethod
-    def plot_grad_cam(model_pre_output, grids1, grids2, predicted_labels):
+    def plot_grad_cam(model_pre_output, grids1, grids2, class_name, target_tag_prob, seconds):
+        plt.figure(figsize=(20, 5))
+        plt.imshow(model_pre_output[seconds], aspect='auto', origin='lower')
+        plt.imshow(grids1[seconds][:,:], alpha=0.4, aspect='auto', origin='lower', cmap='jet')
+        plt.imshow(grids2[seconds][:,:], alpha=0.4, aspect='auto', origin='lower', cmap='jet')
+        plt.colorbar(format='%+02.0f')
+        plt.title(f'Probability : {target_tag_prob[seconds]:.4f}', fontsize=30)
+        plt.ylabel('Mel Frequency', fontsize=30)
+        plt.xlabel(f'Time Frame : 1sec', fontsize=30)
+        
+
+    def subplot_grad_cam(model_pre_output, grids1, grids2, predicted_labels):
         
         """
         Plots GradCAM visualizations.
