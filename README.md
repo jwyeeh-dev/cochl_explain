@@ -16,7 +16,7 @@ This file have scripts about Grad-CAM testing, visualizing.
 
 ## Grad-CAM Testing Tool (Python module)
 This file is the tool which is working on 
-- any model 
+- any model (.h5)
   - they have Activation function and Convolution layer
 - any input length
   - they can split about 1sec
@@ -73,7 +73,6 @@ def cli():
 
 - GradCAM (tf-keras-vis, tf-explain)
 - Single Plot
-- Subplot according to time range
 - Distribution of concentrated gradient
 - (contd.)
 
