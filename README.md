@@ -26,7 +26,7 @@ This file is the tool which is working on
 ### Working Command
 
 ```
-$ python test.py -p [model_pre] -m [model_main] -a [audio_source] -cl [class_list] -c [class_name] -ts [target_sec]
+$ python main.py -p [model_pre] -m [model_main] -a [audio_source] -cl [class_list] -c [class_name] -ts [target_sec]
 ```
 
 ### CLI structures
