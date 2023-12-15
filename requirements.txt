@@ -1,15 +1,8 @@
 tf-keras-vis
 tensorflow
 keras
-re
 numpy
 pandas
 matplotlib
-argparse
 tf-keras-vis
 tf-explain
-
-'''
-If you want to test another CAM libraries, please insert the name of the library in the list below.
-https://cochl.atlassian.net/l/cp/Ho4yDUk4
-'''

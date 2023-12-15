@@ -31,8 +31,8 @@ class GradCAMUtils:
         
         return data
 
-    @classmethod
-    def generate_grad_cam_tf_explain(cls, model, model_1, model_pre_output, class_num, layer_name, args):
+    @staticmethod
+    def generate_grad_cam_tf_explain(model, model_pre_output, class_num, layer_name, args):
         """
         Generates GradCAM using TfExplain.
 
@@ -54,7 +54,7 @@ class GradCAMUtils:
         explainer = TfExplainGradCAM()
 
         for i in range(model_pre_output.shape[0]):
-            data = cls._preprocess_input(model_pre_output[i])
+            data = GradCAMUtils._preprocess_input(model_pre_output[i])
             data = (data, None)
             print(data[0].shape)
 
@@ -66,8 +66,8 @@ class GradCAMUtils:
                 grids2.append(cam2)
 
             elif ModelUtils.check_model_type(args) == 'ensemble':
-                cam1 = explainer.explain(data, model, class_index=class_num, layer_name=layer_name[0])
-                cam2 = explainer.explain(data, model_1, class_index=class_num, layer_name=layer_name[1])
+                cam1 = explainer.explain(data, model[0], class_index=class_num, layer_name=layer_name[0])
+                cam2 = explainer.explain(data, model[1], class_index=class_num, layer_name=layer_name[1])
                 grids1.append(cam1)
                 grids2.append(cam2)
             else:

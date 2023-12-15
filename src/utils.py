@@ -64,6 +64,26 @@ class ModelUtils:
         return model_pre, model_main, inner_model_2, inner_reduce_model_0, inner_reduce_model_1, inner_model_0, inner_model_1
 
     @staticmethod
+    def load_tflite_model():
+        """
+        Loads and returns TFLite models.
+
+        Returns:
+        - Tuple of TFLite models and inner models.
+        """
+
+        interpreter_pre = tf.lite.Interpreter(model_path=args.pre_model)
+        interpreter_pre.allocate_tensors()
+
+        input_details_pre = interpreter_pre.get_input_details()
+        output_details_pre = interpreter_pre.get_output_details()
+
+
+
+        return interpreter, input_details, output_details
+
+
+    @staticmethod
     def load_class_list(model_path, model, args):
         """
         Loads class list based on the model's class count.
@@ -115,6 +135,26 @@ class ModelUtils:
         """
         class_num = tags_df[tags_df['tags'] == tag_name].index[0]
         return class_num
+    
+    @staticmethod
+    def find_last_conv_layer(model_main):
+        """
+        Finds the last convolutional layer.
+
+        Parameters:
+        - model_main: The Keras model.
+
+        Returns:
+        - str: Name of the last convolutional layer.
+        """
+
+        last_conv_layer = None
+        for layer in reversed(model_main.layers):
+            if len(layer.output_shape) == 4:
+                last_conv_layer = layer.name
+                break
+
+        return last_conv_layer
 
     @staticmethod
     def predict(model_pre, model_main, tags, frames_reshaped):
@@ -315,6 +355,7 @@ class VisualizationUtils:
 
         plt.savefig('./assets/_output/activation_hist_grad.png', axs)
         plt.close()
+ 
 
 class AudioUtils:
     def __init__(self):

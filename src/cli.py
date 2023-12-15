@@ -22,7 +22,7 @@ def cli():
     # The arguments for audio source
     parser.add_argument('--audio_source', '-a', type=str, help='audio source path')
     parser.add_argument('--class_name', '-c', type=str, default='Gunshot', help='original class name by sources')
-    parser.add_argument('--target_sec', '-ts', type=int, default=1, help='start time of target range')
+    parser.add_argument('--target_sec', '-ts', type=int, default=0, help='start time of target range')
 
     """
     The arguments for Modifying the audio source
