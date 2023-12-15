@@ -21,7 +21,12 @@ This file is the tool which is working on
 - any input length
   - they can split about 1sec
   - mp3, wav, etc.
-
+- class list shape(.csv)
+```
+tags (-> column name should be tags)
+Gunshot
+...
+```
 
 ### Working Command
 
