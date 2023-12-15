@@ -36,7 +36,6 @@ def main():
         
     # Step 6: Visualization
     VisualizationUtils.plot_grad_cam(model_pre_output, grad_cam_results1, grad_cam_results2, args.class_name, target_tag_prob=target_tag_prob, seconds=args.target_sec)
-    #VisualizationUtils.subplot_grad_cam(model_pre_output, grad_cam_results1, grad_cam_results2, target_tag_prob=target_tag_prob)
 
 if __name__ == "__main__":
     main()

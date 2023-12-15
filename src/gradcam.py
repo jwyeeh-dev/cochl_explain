@@ -31,6 +31,7 @@ class GradCAMUtils:
         
         return data
 
+    # NOW WORKING
     @staticmethod
     def generate_grad_cam_tf_explain(model, model_pre_output, class_num, layer_name, args):
         """
