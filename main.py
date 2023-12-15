@@ -28,10 +28,10 @@ def main():
     class_index = model_utils.find_class_num(args.class_name, tags)
     gradcam_utils = GradCAMUtils()
     if model_type == 'ensemble':
-        grad_cam_results1, grad_cam_results2 = gradcam_utils.generate_grad_cam_tf_explain([inner_model_0, inner_model_1], model_pre_output, class_index, ['m_main_0_Conv_1', 'm_main_1_Conv_1'], args)
+        grad_cam_results1, grad_cam_results2 = gradcam_utils.generate_grad_cam_tf_explain([inner_model_0, inner_model_1], model_pre_output, class_index, [ModelUtils.find_last_conv_layer(inner_model_0), ModelUtils.find_last_conv_layer(inner_model_1)], args)
         #grad_cam_results1, grad_cam_results2 = gradcam_utils.generate_grad_cam_tf_keras_vis([inner_model_0, inner_model_1], model_pre_output, class_index, ['m_main_0_Conv_1', 'm_main_1_Conv_1'], args)
     else:
-        grad_cam_results1, grad_cam_results2 = gradcam_utils.generate_grad_cam_tf_explain(model_main, model_pre_output, class_index, 'conv2d_46', args)
+        grad_cam_results1, grad_cam_results2 = gradcam_utils.generate_grad_cam_tf_explain(model_main, model_pre_output, class_index, ModelUtils.find_last_conv_layer(model_main), args)
         #grad_cam_results1, grad_cam_results2 = gradcam_utils.generate_grad_cam_tf_keras_vis(model_main, model_pre_output, class_index, 'conv2d_46', args)
         
     # Step 6: Visualization
