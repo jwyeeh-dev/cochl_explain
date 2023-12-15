@@ -26,7 +26,7 @@ This file is the tool which is working on
 ### Working Command
 
 ```
-$ python test.py -p [model_pre] -m [model_main] 
+$ python test.py -p [model_pre] -m [model_main] -a [audio_source] -cl [class_list] -c [class_name] -ts [target_sec]
 ```
 
 ### CLI structures
@@ -64,16 +64,6 @@ def cli():
     parser.add_argument('--middle_time', '-mt', type=float, default=0.2, help='middle time')
     parser.add_argument('--expected_prob', '-ep', type=int, default=90, 
                         help='expected probability (%)')
-    
-    # The arguments for pass filtering
-    parser.add_argument('--pf_type', '-pt', type=str, default='lpf', 
-                        help='pass filter type')
-    parser.add_argument('--pf_freq', '-pf', type=int, default=1000, 
-                        help='pass filter frequency')
-    parser.add_argument('--pf_rolloff', '-pr', type=float, default=0.5, 
-                        help='pass filter rolloff')
-    parser.add_argument('--output', '-o', type=str, default='gradcam.png', 
-                        help='output path')
     
     return parser.parse_args()
 ```
