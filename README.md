@@ -1,4 +1,4 @@
-# Cochl_CAM
+# Cochl-Explain
 This repository is the tool which can test gradient concentration by CAM on your models.
 
 
